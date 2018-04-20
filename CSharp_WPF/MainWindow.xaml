@@ -30,11 +30,12 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <ComboBox Grid.Row="0" HorizontalAlignment="Center" Width="120" Height="25" SelectedIndex="0">
-                    <ComboBoxItem Content="请选择串口名称" HorizontalAlignment="Left" Width="118" Visibility="Collapsed"/>
+                <ComboBox Name="selectPort" Grid.Row="0" HorizontalAlignment="Center" Width="120" Height="25" SelectedIndex="0">
+                    <!--ComboBoxItem Content="请选择串口名称" HorizontalAlignment="Left" Width="118" Visibility="Collapsed"/-->
                 </ComboBox>
-                <ComboBox Grid.Row="1" HorizontalAlignment="Center" Width="120" Height="25" SelectedIndex="0">
-                    <ComboBoxItem Content="请选择通讯速率" HorizontalAlignment="Left" Width="118" Visibility="Collapsed"/>
+
+                <ComboBox Name="selectSpeed" Grid.Row="1" HorizontalAlignment="Center" Width="120" Height="25" SelectedIndex="0">
+                    <!-- ComboBoxItem Content="请选择通讯速率" HorizontalAlignment="Left" Width="118" Visibility="Collapsed"/-->
                 </ComboBox>
             </Grid>
 
@@ -44,8 +45,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
-                <Button Grid.Column="0" Content="连接" VerticalAlignment="Center" Width="60"/>
-                <Button Grid.Column="1" Content="断开" VerticalAlignment="Center" Width="60"/>
+                <Button Name="open" Grid.Column="0" Content="连接" VerticalAlignment="Center" Width="60" Click="open_Click"/>
+                <Button Name="close" Grid.Column="1" Content="断开" VerticalAlignment="Center" Width="60" Click="close_Click"/>
             </Grid>
 
             <Grid Grid.Row="2">
@@ -57,11 +58,11 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBox Grid.Row="0" Text="地址设定（1-255）" Width="120" Height="23" HorizontalAlignment="Center"/>
-                <TextBox Grid.Row="1" Text="设定寄存器号" Width="120" Height="23" HorizontalAlignment="Center"/>
-                <TextBox Grid.Row="2" Text="设定寄存器个数" Width="120" Height="23" HorizontalAlignment="Center"/>
-                <TextBox Grid.Row="3" Text="读内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
-                <TextBox Grid.Row="4" Text="写内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="address" Grid.Row="0" Text="地址设定（1-255）" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="registerNo" Grid.Row="1" Text="设定寄存器号" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="registerCount" Grid.Row="2" Text="设定寄存器个数" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="readContent" Grid.Row="3" Text="读内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="writeContent" Grid.Row="4" Text="写内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
             </Grid>
         </Grid>
         
@@ -78,14 +79,14 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <ListView Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
+                <ListView Name="sendMessage" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn/>
                         </GridView>
                     </ListView.View>
                 </ListView>
-                <ListView Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
+                <ListView Name="returnMessage" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn/>
@@ -104,11 +105,11 @@
 
                 <Label Grid.Column="0" Content="显示温度" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <Label Grid.Column="2" Content="显示光强" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                <TextBlock Name="temperature" Grid.Column="1" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                <TextBlock Name="light" Grid.Column="3" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center"/>
             </Grid>
 
-            <Canvas Grid.Row="2" Width="220" Height="160" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Canvas Name="canvas" Grid.Row="2" Width="220" Height="160" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         </Grid>
 
@@ -133,11 +134,11 @@
                     <ColumnDefinition Width="2.2*"/>
                 </Grid.ColumnDefinitions>
 
-                <Slider Grid.Column="1" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
-                <Slider Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
-                <Slider Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
-                <Slider Grid.Column="1" Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
-                <Slider Grid.Column="1" Grid.Row="4" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
+                <Slider Name="red" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
+                <Slider Name="green" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
+                <Slider Name="yellow" Grid.Column="1" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
+                <Slider Name="blue" Grid.Column="1" Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
+                <Slider Name="white" Grid.Column="1" Grid.Row="4" HorizontalAlignment="Center" VerticalAlignment="Center" Width="125"/>
                 <Label Grid.Column="0" Grid.Row="0" Content="红灯" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 <Label Grid.Column="0" Grid.Row="1" Content="绿灯" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 <Label Grid.Column="0" Grid.Row="2" Content="黄灯" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -151,8 +152,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <RadioButton Grid.Row="0" Content="颜色显示LED明暗" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Button Grid.Row="1" Content="发送" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75"/>
+                <RadioButton Name="color" Grid.Row="0" Content="颜色显示LED明暗" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Button Name="send" Grid.Row="1" Content="发送" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75" Click="send_Click"/>
             </Grid>
 
             <Grid Grid.Row="2">
@@ -161,8 +162,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Content="log开始" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75"/>
-                <Button Grid.Column="1" Content="log结束" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75"/>
+                <Button Name="logStart" Grid.Column="0" Content="log开始" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75" Click="logStart_Click"/>
+                <Button Name="logEnd" Grid.Column="1" Content="log结束" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75" Click="logEnd_Click"/>
             </Grid>
         </Grid>
 
