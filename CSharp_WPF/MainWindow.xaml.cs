@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +13,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
+using System.Diagnostics;
+using System.Collections;
+using System.Windows.Threading;
+
 
 namespace CSharp_WPF
 {
@@ -27,6 +30,10 @@ namespace CSharp_WPF
         SerialPort myPort;
         List<Port> portList = new List<Port>();
         List<Speed> speedList = new List<Speed>();
+        private delegate void MyDelegate();
+        double time = 0;
+        double t = 160;
+        double l = 160;
 
         public MainWindow()
         {
@@ -40,6 +47,7 @@ namespace CSharp_WPF
             {
                 myPort = new SerialPort(selectPort.SelectedValue.ToString(), (int)selectSpeed.SelectedValue);
                 myPort.Open();
+                flag = true;
             }
             PortWrite("1");
         }
@@ -50,15 +58,28 @@ namespace CSharp_WPF
             if (myPort != null && myPort.IsOpen)
             {
                 myPort.Close();
+                flag = false;
             }
         }
 
         private void send_Click(object sender, RoutedEventArgs e)
         {
             PortWrite("r");
-            int m = (int)red.Value;
-            string s = (m + 100).ToString();
-            PortWrite(s);
+            int r = (int)red.Value;
+            int g = (int)green.Value;
+            int y = (int)yellow.Value;
+            int b = (int)blue.Value;
+            int w = (int)white.Value;
+            string sr = r.ToString();
+            string sg = g.ToString();
+            string sy = y.ToString();
+            string sb = b.ToString();
+            string sw = w.ToString();
+            PortWrite(sr + " ");
+            PortWrite(sg + " ");
+            PortWrite(sy + " ");
+            PortWrite(sb + " ");
+            PortWrite(sw + " ");
         }
 
         private void PortWrite(string message)
@@ -86,40 +107,67 @@ namespace CSharp_WPF
             selectSpeed.SelectedIndex = 0;
         }
 
-        private void logStart_Click(object sender, RoutedEventArgs e)
+       private void logStart_Click(object sender, RoutedEventArgs e)
         {
-            flag = false;
-            ReadData();
+            {
+                Thread myThread = new Thread(thread);
+                myThread.Start();
+            }
         }
 
         private void logEnd_Click(object sender, RoutedEventArgs e)
         {
-            flag = true;
+            Thread.CurrentThread.Abort();
         }
 
-        private void ReadData()
+        private void thread()
         {
-            myPort.ReadTimeout = 90 * 1000;
-            myPort.DataReceived += new SerialDataReceivedEventHandler(this.serialport_DataReceived);
-            try
+            while (flag)
             {
+                Dispatcher.BeginInvoke(new MyDelegate(GetData));
                 Thread.Sleep(100);
-                
-            } finally { }
+            }
         }
-        //定义事件处理函数
 
-        private void serialport_DataReceived(Object sender, SerialDataReceivedEventArgs e)
+        private void GetData()
         {
-            string s = "";
-            try
+            string data = myPort.ReadLine();
+            string s1 = "", s2 = "";
+            int i = 0;
+            for(;i<data.Length;i++)
             {
-                Thread.Sleep(100);  //（毫秒）等待一定时间，确保数据的完整性 int len        
-                s = myPort.ReadLine();
-            } finally { }
-            string[] ss = s.Split(' ');
-            temperature.Text = ss[0];
-            light.Text = ss[1];
+                if(data[i]!=' ')
+                {
+                    s1 += data[i];
+                }
+                else
+                {
+                    i++;
+                    break;
+                }
+            }
+            for(;i<data.Length;i++)
+            {
+                s2 += data[i];
+            }
+            Line line1 = new Line();
+            line1.Stroke = Brushes.Red;
+            Line line2 = new Line();
+            line2.Stroke = Brushes.Blue;
+            line1.X1 = time; line1.Y1 = t;
+            line2.X1 = time; line2.Y1 = l;
+            temperature.Text = s1;
+            t = double.Parse(s1);
+            t = 160 - t / 1000 * 160;
+            light.Text = s2;
+            l = double.Parse(s2);
+            l = 160 - l / 1000 * 160;
+            time++;
+            line1.X2 = time; line1.Y2 = t;
+            line2.X2 = time; line2.Y2 = l;
+            canvas.Children.Add(line1);
+            canvas.Children.Add(line2);
+            
         }
     }
 }
