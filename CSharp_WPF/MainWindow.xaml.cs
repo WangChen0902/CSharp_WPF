@@ -51,7 +51,6 @@ namespace CSharp_WPF
             }
             PortWrite("1");
         }
-
         private void close_Click(object sender, RoutedEventArgs e)
         {
             PortWrite("0");
@@ -61,7 +60,6 @@ namespace CSharp_WPF
                 flag = false;
             }
         }
-
         private void send_Click(object sender, RoutedEventArgs e)
         {
             PortWrite("r");
@@ -80,6 +78,56 @@ namespace CSharp_WPF
             PortWrite(sy + " ");
             PortWrite(sb + " ");
             PortWrite(sw + " ");
+        }
+        private void logStart_Click(object sender, RoutedEventArgs e)
+        {
+            {
+                Thread myThread = new Thread(StartThread);
+                myThread.IsBackground = true;
+                myThread.Start();
+            }
+        }
+        private void logEnd_Click(object sender, RoutedEventArgs e)
+        {
+            flag = false;
+            Thread.CurrentThread.Abort();
+        }
+        private void sendModBus_Click(object sender, RoutedEventArgs e)
+        {
+            if (flag)
+            {
+                try
+                {
+                    byte address = Convert.ToByte(addressNo.Text, 16);
+                    byte regNumber = Convert.ToByte(registerNo.Text, 16);
+                    byte regCount = Convert.ToByte(registerCount.Text, 16);
+                    byte read = Convert.ToByte(readContent.Text, 16);
+                    byte write = Convert.ToByte(writeContent.Text, 16);
+
+                    MyModbus modbus = new MyModbus();
+                    byte[] text = modbus.GetReadFrame(address, write, regNumber, regCount, 8);
+                    myPort.Write(text, 0, 8);
+                    sendMessage.Items.Add(BitConverter.ToString(text));
+                }
+                catch(Exception exception)
+                {
+                    MessageBox.Show(exception.ToString());
+                }
+            }
+        }
+        private void receiveModBus_Click(object sender, RoutedEventArgs e)
+        {
+            if(flag)
+            {
+                try
+                {
+                    returnMessage.Items.Add(myPort.ReadLine());
+                }
+                catch
+                {
+                    MessageBox.Show("Error!");
+                }
+            }
         }
 
         private void PortWrite(string message)
@@ -107,20 +155,7 @@ namespace CSharp_WPF
             selectSpeed.SelectedIndex = 0;
         }
 
-       private void logStart_Click(object sender, RoutedEventArgs e)
-        {
-            {
-                Thread myThread = new Thread(thread);
-                myThread.Start();
-            }
-        }
-
-        private void logEnd_Click(object sender, RoutedEventArgs e)
-        {
-            Thread.CurrentThread.Abort();
-        }
-
-        private void thread()
+        private void StartThread()
         {
             while (flag)
             {
@@ -134,6 +169,7 @@ namespace CSharp_WPF
             string data = myPort.ReadLine();
             string s1 = "", s2 = "";
             int i = 0;
+
             for(;i<data.Length;i++)
             {
                 if(data[i]!=' ')
@@ -146,10 +182,12 @@ namespace CSharp_WPF
                     break;
                 }
             }
+
             for(;i<data.Length;i++)
             {
                 s2 += data[i];
             }
+
             Line line1 = new Line();
             line1.Stroke = Brushes.Red;
             Line line2 = new Line();
@@ -169,5 +207,12 @@ namespace CSharp_WPF
             canvas.Children.Add(line2);
             
         }
+
+        private void ShowResult(byte[] resbuffer)
+        {
+            MyModbus modbus = new MyModbus();
+            returnMessage.Items.Add(modbus.SetText(resbuffer));
+        }
+
     }
 }

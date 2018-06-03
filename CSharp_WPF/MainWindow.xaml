@@ -57,13 +57,22 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBox Name="address" Grid.Row="0" Text="地址设定（1-255）" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <TextBox Name="addressNo" Grid.Row="0" Text="地址设定（1-255）" Width="120" Height="23" HorizontalAlignment="Center"/>
                 <TextBox Name="registerNo" Grid.Row="1" Text="设定寄存器号" Width="120" Height="23" HorizontalAlignment="Center"/>
                 <TextBox Name="registerCount" Grid.Row="2" Text="设定寄存器个数" Width="120" Height="23" HorizontalAlignment="Center"/>
                 <TextBox Name="readContent" Grid.Row="3" Text="读内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
                 <TextBox Name="writeContent" Grid.Row="4" Text="写内容设定" Width="120" Height="23" HorizontalAlignment="Center"/>
+                <Grid Grid.Row="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Name="sendModBus" Grid.Column="0" Content="发送" Width="80" Height="23" HorizontalAlignment="Center" Click="sendModBus_Click"/>
+                    <Button Name="receiveModBus" Grid.Column="1" Content="接收" Width="80" Height="23" HorizontalAlignment="Center" Click="receiveModBus_Click"/>
+                </Grid>
             </Grid>
         </Grid>
         
