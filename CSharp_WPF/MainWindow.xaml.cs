@@ -1,23 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
-using System.Diagnostics;
-using System.Collections;
 using System.Windows.Threading;
-
+using System.Web.Script.Serialization;
+using System.Text;
+using System.Windows.Forms;
+using CSharp_WPF.Datas;
+using System.IO;
 
 namespace CSharp_WPF
 {
@@ -31,9 +24,19 @@ namespace CSharp_WPF
         List<Port> portList = new List<Port>();
         List<Speed> speedList = new List<Speed>();
         private delegate void MyDelegate();
+        List<Data> dataList = new List<Data>();
+        string json = "";
         double time = 0;
         double t = 160;
+        double tC = 0;
         double l = 160;
+        double rV = 0;
+        double gV = 0;
+        double yV = 0;
+        double bV = 0;
+        double wV = 0;
+        string sent = "";
+        string recv = "";
 
         public MainWindow()
         {
@@ -60,14 +63,20 @@ namespace CSharp_WPF
                 flag = false;
             }
         }
+
         private void send_Click(object sender, RoutedEventArgs e)
         {
             PortWrite("r");
-            int r = (int)red.Value;
-            int g = (int)green.Value;
-            int y = (int)yellow.Value;
-            int b = (int)blue.Value;
-            int w = (int)white.Value;
+            rV = red.Value;
+            gV = green.Value;
+            yV = yellow.Value;
+            bV = blue.Value;
+            wV = white.Value;
+            int r = (int)rV;
+            int g = (int)gV;
+            int y = (int)yV;
+            int b = (int)bV;
+            int w = (int)wV;
             string sr = r.ToString();
             string sg = g.ToString();
             string sy = y.ToString();
@@ -78,40 +87,132 @@ namespace CSharp_WPF
             PortWrite(sy + " ");
             PortWrite(sb + " ");
             PortWrite(sw + " ");
+
+            Color c = Color.FromScRgb(255, (float)1 / 5*r + (float)1 / 10*y, (float)1 / 5 * g + (float)1 / 10*y, (float)1 / 5 * b);
+            color.Fill = new SolidColorBrush(c);
         }
+
+        private void drawStart_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (flag)
+                {
+                    PortWrite("s");
+                    Thread drawThread = new Thread(StartDraw);
+                    drawThread.Start();
+                }
+            }
+            catch(Exception exception)
+            {
+                System.Windows.MessageBox.Show(exception.ToString());
+            }
+        }
+        private void drawEnd_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                PortWrite("e");
+                Thread.CurrentThread.Abort();
+            }
+            catch(Exception exception)
+            {
+                System.Windows.MessageBox.Show(exception.ToString());
+            }
+        }
+
         private void logStart_Click(object sender, RoutedEventArgs e)
         {
+            if (flag)
             {
-                Thread myThread = new Thread(StartThread);
-                myThread.IsBackground = true;
-                myThread.Start();
+                Thread logThread = new Thread(StartSave);
+                logThread.Start();
             }
+            
         }
         private void logEnd_Click(object sender, RoutedEventArgs e)
         {
-            flag = false;
-            Thread.CurrentThread.Abort();
+            DataContext dataConText = new DataContext(dataList);
+            StringBuilder stringBuilder = new StringBuilder();
+            JavaScriptSerializer js = new JavaScriptSerializer();
+            string path = "";
+
+            js.Serialize(dataConText, stringBuilder);
+            json = stringBuilder.ToString();
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.ShowDialog();
+            if (fbd.SelectedPath != string.Empty)
+            {
+                path = fbd.SelectedPath + "\\info.json";
+            }
+            File.WriteAllText(path, json);
+            try
+            {
+                Thread.CurrentThread.Abort();
+            }
+            catch (Exception exception)
+            {
+                System.Windows.MessageBox.Show(exception.ToString());
+            }
         }
+
         private void sendModBus_Click(object sender, RoutedEventArgs e)
         {
             if (flag)
             {
                 try
                 {
+                    PortWrite("m");
                     byte address = Convert.ToByte(addressNo.Text, 16);
                     byte regNumber = Convert.ToByte(registerNo.Text, 16);
                     byte regCount = Convert.ToByte(registerCount.Text, 16);
-                    byte read = Convert.ToByte(readContent.Text, 16);
-                    byte write = Convert.ToByte(writeContent.Text, 16);
+                    List<byte> bWrite = new List<byte>();
+                    List<string> sWrite = new List<string>();
+                    for (int j=0; j<writeContent.Text.Length; j += 2)
+                    {
+                        sWrite.Add(writeContent.Text.Substring(j, 2));
+                    }
+                    for(int j=0; j<sWrite.Count; j++)
+                    {
+                        bWrite.Add(Convert.ToByte(sWrite[j], 16));
+                    }
+                    byte[] myWrite = bWrite.ToArray();
+                    byte count = (byte)myWrite.Length;
+                    byte[] myCount = new byte[1];
+                    myCount[0] = count;
 
                     MyModbus modbus = new MyModbus();
-                    byte[] text = modbus.GetReadFrame(address, write, regNumber, regCount, 8);
-                    myPort.Write(text, 0, 8);
-                    sendMessage.Items.Add(BitConverter.ToString(text));
+                    byte[] text = modbus.GetReadFrame(address, (byte)0x10, regNumber, regCount, 8);
+                    List<byte> bText = new List<byte>();
+                    int i = 0;
+                    for (int j=0;j<6;j++)
+                    {
+                        bText.Add(text[i]);
+                        i++;
+                        if (i == 6)
+                        {
+                            bText.Add(myCount[0]);
+                            foreach (byte wb in myWrite)
+                            {
+                                bText.Add(wb);
+                            }
+                        }
+                    }
+                    byte[] tmpText = bText.ToArray();
+                    ushort crc = MyModbus.CRC16(tmpText, 0, tmpText.Length - 3);
+                    bText.Add(MyModbus.WORD_HI(crc));
+                    bText.Add(MyModbus.WORD_LO(crc));
+                    byte[] myText = bText.ToArray();
+
+                    PortWrite(count.ToString());
+                    myPort.Write(myText, 0, myText.Length);
+                    sendMessage.Items.Add(BitConverter.ToString(myText));
+                    returnMessage.Items.Add(BitConverter.ToString(text));
+                    sent = writeContent.Text;
                 }
                 catch(Exception exception)
                 {
-                    MessageBox.Show(exception.ToString());
+                    System.Windows.MessageBox.Show(exception.ToString());
                 }
             }
         }
@@ -121,13 +222,80 @@ namespace CSharp_WPF
             {
                 try
                 {
-                    returnMessage.Items.Add(myPort.ReadLine());
+                    myPort.Write("n");
+                    byte address = Convert.ToByte(addressNo.Text, 16);
+                    byte regNumber = Convert.ToByte(registerNo.Text, 16);
+                    byte regCount = Convert.ToByte(registerCount.Text, 16);
+                    List<byte> bRead = new List<byte>();
+                    List<string> sRead = new List<string>();
+                    for (int j = 0; j < readContent.Text.Length; j += 2)
+                    {
+                        sRead.Add(writeContent.Text.Substring(j, 2));
+                    }
+                    for (int j = 0; j < sRead.Count; j++)
+                    {
+                        bRead.Add(Convert.ToByte(sRead[j], 16));
+                    }
+                    byte[] myRead = bRead.ToArray();
+                    byte count = (byte)myRead.Length;
+                    byte[] myCount = new byte[1];
+                    myCount[0] = count;
+
+                    MyModbus modbus = new MyModbus();
+                    byte[] text = modbus.GetReadFrame(address, (byte)0x03, regNumber, regCount, 8);
+                    List<byte> bText = new List<byte>();
+                    int i = 0;
+                    for (int j = 0; j < 2; j++)
+                    {
+                        bText.Add(text[i]);
+                        i++;
+                        if (i == 6)
+                        {
+                            bText.Add(myCount[0]);
+                            foreach (byte rb in myRead)
+                            {
+                                bText.Add(rb);
+                            }
+                        }
+                    }
+                    byte[] tmpText = bText.ToArray();
+                    ushort crc = MyModbus.CRC16(tmpText, 0, tmpText.Length - 3);
+                    bText.Add(MyModbus.WORD_HI(crc));
+                    bText.Add(MyModbus.WORD_LO(crc));
+                    byte[] myText = bText.ToArray();
+
+                    PortWrite(count.ToString());
+                    myPort.Write(text, 0, 8);
+                    sendMessage.Items.Add(BitConverter.ToString(text));
+                    returnMessage.Items.Add(BitConverter.ToString(myText));
+                    recv = readContent.Text;
                 }
-                catch
+                catch(Exception exception)
                 {
-                    MessageBox.Show("Error!");
+                    System.Windows.MessageBox.Show(exception.ToString());
                 }
             }
+        }
+
+        private void restart_Click(object sender, RoutedEventArgs e)
+        {
+            dataList.Clear();
+            json = "";
+            time = 0;
+            t = 160;
+            tC = 0;
+            l = 160;
+            rV = 0;
+            gV = 0;
+            yV = 0;
+            bV = 0;
+            wV = 0;
+            sent = "";
+            recv = "";
+        }
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Thread.CurrentThread.Abort();
         }
 
         private void PortWrite(string message)
@@ -155,12 +323,34 @@ namespace CSharp_WPF
             selectSpeed.SelectedIndex = 0;
         }
 
-        private void StartThread()
+        private void StartDraw()
         {
             while (flag)
             {
-                Dispatcher.BeginInvoke(new MyDelegate(GetData));
-                Thread.Sleep(100);
+                try
+                {
+                    Dispatcher.BeginInvoke(new MyDelegate(GetData));
+                    Thread.Sleep(100);
+                }
+                catch (Exception exception)
+                {
+                    System.Windows.MessageBox.Show(exception.ToString());
+                }
+            }
+        }
+        private void StartSave()
+        {
+            while (flag)
+            {
+                try
+                {
+                    Dispatcher.BeginInvoke(new MyDelegate(SaveData));
+                    Thread.Sleep(100);
+                }
+                catch (Exception exception)
+                {
+                    System.Windows.MessageBox.Show(exception.ToString());
+                }
             }
         }
 
@@ -194,11 +384,12 @@ namespace CSharp_WPF
             line2.Stroke = Brushes.Blue;
             line1.X1 = time; line1.Y1 = t;
             line2.X1 = time; line2.Y1 = l;
-            temperature.Text = s1;
             t = double.Parse(s1);
+            tC = (1.0 / (1.0 / (25 + 273.15) + 1.0 / 3435.0 * (Math.Log(1024.0 / t) - 1.0)) - 273.15);
+            temperature.Text = tC.ToString();
             t = 160 - t / 1000 * 160;
-            light.Text = s2;
             l = double.Parse(s2);
+            light.Text = s2;
             l = 160 - l / 1000 * 160;
             time++;
             line1.X2 = time; line1.Y2 = t;
@@ -207,12 +398,10 @@ namespace CSharp_WPF
             canvas.Children.Add(line2);
             
         }
-
-        private void ShowResult(byte[] resbuffer)
+        private void SaveData()
         {
-            MyModbus modbus = new MyModbus();
-            returnMessage.Items.Add(modbus.SetText(resbuffer));
+            Data data = new Data(myPort.PortName, myPort.BaudRate, tC, l, rV, gV, yV, bV, wV, sent, recv);
+            dataList.Add(data);
         }
-
     }
 }

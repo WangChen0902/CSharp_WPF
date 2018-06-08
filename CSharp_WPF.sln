@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2002
+VisualStudioVersion = 15.0.27428.2011
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp_WPF", "CSharp_WPF\CSharp_WPF.csproj", "{BFB4C76D-B7A5-4BF4-A73B-07817609A764}"
 EndProject
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6E8981AB-F5A4-494E-AF09-C783A8A8F9FE}
+		SolutionGuid = {13A7F62E-7AD6-408F-96D8-4F80900F2B69}
 	EndGlobalSection
 EndGlobal
