@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharp_WPF.Datas
+namespace CSharp_WPF
 {
     class Data
     {
@@ -12,8 +12,9 @@ namespace CSharp_WPF.Datas
         {
 
         }
-        public Data(string port, int rate, double t, double l, double r, double g, double y, double b, double w, string send, string recv)
+        public Data(int id, string port, int rate, double t, double l, double r, double g, double y, double b, double w, string send, string recv)
         {
+            ID = id;
             Port = port;
             Rate = rate;
             Temperature = t;
@@ -26,6 +27,7 @@ namespace CSharp_WPF.Datas
             Send = send;
             Recv = recv;
         }
+        public int ID { get; set; }
         public string Port { get; set; }
         public int Rate { get; set; }
         public double Temperature { get; set; }

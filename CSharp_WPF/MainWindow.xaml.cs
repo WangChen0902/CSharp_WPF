@@ -9,7 +9,6 @@ using System.Windows.Threading;
 using System.Web.Script.Serialization;
 using System.Text;
 using System.Windows.Forms;
-using CSharp_WPF.Datas;
 using System.IO;
 
 namespace CSharp_WPF
@@ -26,6 +25,7 @@ namespace CSharp_WPF
         private delegate void MyDelegate();
         List<Data> dataList = new List<Data>();
         string json = "";
+        int id = 1;
         double time = 0;
         double t = 160;
         double tC = 0;
@@ -132,12 +132,11 @@ namespace CSharp_WPF
         }
         private void logEnd_Click(object sender, RoutedEventArgs e)
         {
-            DataContext dataConText = new DataContext(dataList);
             StringBuilder stringBuilder = new StringBuilder();
             JavaScriptSerializer js = new JavaScriptSerializer();
             string path = "";
 
-            js.Serialize(dataConText, stringBuilder);
+            js.Serialize(dataList, stringBuilder);
             json = stringBuilder.ToString();
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             fbd.ShowDialog();
@@ -280,6 +279,7 @@ namespace CSharp_WPF
         private void restart_Click(object sender, RoutedEventArgs e)
         {
             dataList.Clear();
+            id = 1;
             json = "";
             time = 0;
             t = 160;
@@ -292,9 +292,11 @@ namespace CSharp_WPF
             wV = 0;
             sent = "";
             recv = "";
+            canvas.Children.Clear();
         }
         private void Window_Closed(object sender, EventArgs e)
         {
+            PortWrite("e");
             Thread.CurrentThread.Abort();
         }
 
@@ -345,7 +347,7 @@ namespace CSharp_WPF
                 try
                 {
                     Dispatcher.BeginInvoke(new MyDelegate(SaveData));
-                    Thread.Sleep(100);
+                    Thread.Sleep(500);
                 }
                 catch (Exception exception)
                 {
@@ -400,8 +402,9 @@ namespace CSharp_WPF
         }
         private void SaveData()
         {
-            Data data = new Data(myPort.PortName, myPort.BaudRate, tC, l, rV, gV, yV, bV, wV, sent, recv);
+            Data data = new Data(id, myPort.PortName, myPort.BaudRate, tC, l, rV, gV, yV, bV, wV, sent, recv);
             dataList.Add(data);
+            id++;
         }
     }
 }

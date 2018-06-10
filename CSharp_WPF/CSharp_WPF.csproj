@@ -33,6 +33,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -56,8 +59,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Datas\Data.cs" />
-    <Compile Include="Datas\DataContext.cs" />
+    <Compile Include="Data.cs" />
     <Compile Include="MyModbus.cs" />
     <Compile Include="Speed.cs" />
     <Page Include="MainWindow.xaml">
