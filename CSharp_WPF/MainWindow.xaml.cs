@@ -101,7 +101,6 @@ namespace CSharp_WPF
             {
                 if (flag)
                 {
-                    PortWrite("s");
                     Thread drawThread = new Thread(StartDraw);
                     drawThread.Start();
                 }
@@ -115,7 +114,6 @@ namespace CSharp_WPF
         {
             try
             {
-                PortWrite("e");
                 Thread.CurrentThread.Abort();
             }
             catch(Exception exception)
@@ -209,9 +207,10 @@ namespace CSharp_WPF
                     myPort.Write(";");
                     sendMessage.Items.Add(BitConverter.ToString(myText));
                     //returnMessage.Items.Add(BitConverter.ToString(text));
-                    byte[] getBytes = new byte[32];
+                    /*byte[] getBytes = new byte[32];
                     myPort.Read(getBytes, 0, 32);
                     returnMessage.Items.Add(BitConverter.ToString(getBytes));
+                    */
                     byte[] recvBytes = new byte[32];
                     myPort.Read(recvBytes, 0, 32);
                     returnMessage.Items.Add(BitConverter.ToString(recvBytes));
@@ -232,55 +231,25 @@ namespace CSharp_WPF
                     byte address = Convert.ToByte(addressNo.Text, 16);
                     byte regNumber = Convert.ToByte(registerNo.Text, 16);
                     byte regCount = Convert.ToByte(registerCount.Text, 16);
-                    /*List<byte> bRead = new List<byte>();
-                    List<string> sRead = new List<string>();
-                    for (int j = 0; j < readContent.Text.Length; j += 2)
-                    {
-                        sRead.Add(writeContent.Text.Substring(j, 2));
-                    }
-                    for (int j = 0; j < sRead.Count; j++)
-                    {
-                        bRead.Add(Convert.ToByte(sRead[j], 16));
-                    }
-                    byte[] myRead = bRead.ToArray();
-                    byte count = (byte)myRead.Length;
-                    byte[] myCount = new byte[1];
-                    myCount[0] = count;
-                    */
+                    int count = regCount * 2;
+
                     MyModbus modbus = new MyModbus();
                     byte[] text = modbus.GetReadFrame(address, (byte)0x03, regNumber, regCount, 8);
                     myPort.Write(text, 0, 8);
                     myPort.Write(";");
                     sendMessage.Items.Add(BitConverter.ToString(text));
 
-                    /*List<byte> bText = new List<byte>();
-                    int i = 0;
-                    for (int j = 0; j < 2; j++)
-                    {
-                        bText.Add(text[i]);
-                        i++;
-                        if (i == 6)
-                        {
-                            bText.Add(myCount[0]);
-                            foreach (byte rb in myRead)
-                            {
-                                bText.Add(rb);
-                            }
-                        }
-                    }
-                    byte[] tmpText = bText.ToArray();
-                    ushort crc = MyModbus.CRC16(tmpText, 0, tmpText.Length - 3);
-                    bText.Add(MyModbus.WORD_HI(crc));
-                    bText.Add(MyModbus.WORD_LO(crc));
-                    byte[] myText = bText.ToArray();*/
-
-                    //returnMessage.Items.Add(BitConverter.ToString(myText));
-                    byte[] getBytes = new byte[32];
+                    /*byte[] getBytes = new byte[32];
                     myPort.Read(getBytes, 0, 32);
                     returnMessage.Items.Add(BitConverter.ToString(getBytes));
+                    */
                     byte[] recvBytes = new byte[32];
                     myPort.Read(recvBytes, 0, 32);
                     returnMessage.Items.Add(BitConverter.ToString(recvBytes));
+                    string recvText = OnGetData(recvBytes, count);
+                    UInt32 tData = Convert.ToUInt32(recvText, 16);
+                    readContent.Text = recvText + " " + tData.ToString();
+
                     recv = readContent.Text;
                 }
                 catch(Exception exception)
@@ -345,7 +314,7 @@ namespace CSharp_WPF
                 try
                 {
                     Dispatcher.BeginInvoke(new MyDelegate(GetData));
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
                 catch (Exception exception)
                 {
@@ -371,53 +340,66 @@ namespace CSharp_WPF
 
         private void GetData()
         {
-            string data = myPort.ReadLine();
-            string s1 = "", s2 = "";
-            int i = 0;
-
-            for(;i<data.Length;i++)
+            try
             {
-                if(data[i]!=' ')
-                {
-                    s1 += data[i];
-                }
-                else
-                {
-                    i++;
-                    break;
-                }
-            }
+                MyModbus modbus = new MyModbus();
+                byte[] tByte = modbus.GetReadFrame((byte)0x01, (byte)0x03, (byte)0x02, (byte)0x01, 8);
+                myPort.Write(tByte, 0, 8);
+                myPort.Write(";");
+                byte[] tRecvBytes = new byte[32];
+                myPort.Read(tRecvBytes, 0, 32);
+                string tRecvText = OnGetData(tRecvBytes, 2);
+                UInt32 tData = Convert.ToUInt32(tRecvText, 16);
 
-            for(;i<data.Length;i++)
+                byte[] lByte = modbus.GetReadFrame((byte)0x01, (byte)0x03, (byte)0x05, (byte)0x01, 8);
+                myPort.Write(lByte, 0, 8);
+                myPort.Write(";");
+                byte[] lRecvBytes = new byte[32];
+                myPort.Read(tRecvBytes, 0, 32);
+                string lRecvText = OnGetData(tRecvBytes, 2);
+                UInt32 lData = Convert.ToUInt32(lRecvText, 16);
+
+                Line line1 = new Line();
+                line1.Stroke = Brushes.Red;
+                Line line2 = new Line();
+                line2.Stroke = Brushes.Blue;
+                line1.X1 = time; line1.Y1 = t;
+                line2.X1 = time; line2.Y1 = l;
+                t = (double)tData;
+                tC = (1.0 / (1.0 / (25 + 273.15) + 1.0 / 3435.0 * (Math.Log(1024.0 / t) - 1.0)) - 273.15);
+                temperature.Text = tC.ToString();
+                t = 160 - t / 1000 * 160;
+                l = (double)lData;
+                light.Text = lData.ToString();
+                l = 160 - l / 1000 * 160;
+                time++;
+                line1.X2 = time; line1.Y2 = t;
+                line2.X2 = time; line2.Y2 = l;
+                canvas.Children.Add(line1);
+                canvas.Children.Add(line2);
+            }
+            catch (Exception exception)
             {
-                s2 += data[i];
+                System.Windows.MessageBox.Show(exception.ToString());
             }
-
-            Line line1 = new Line();
-            line1.Stroke = Brushes.Red;
-            Line line2 = new Line();
-            line2.Stroke = Brushes.Blue;
-            line1.X1 = time; line1.Y1 = t;
-            line2.X1 = time; line2.Y1 = l;
-            t = double.Parse(s1);
-            tC = (1.0 / (1.0 / (25 + 273.15) + 1.0 / 3435.0 * (Math.Log(1024.0 / t) - 1.0)) - 273.15);
-            temperature.Text = tC.ToString();
-            t = 160 - t / 1000 * 160;
-            l = double.Parse(s2);
-            light.Text = s2;
-            l = 160 - l / 1000 * 160;
-            time++;
-            line1.X2 = time; line1.Y2 = t;
-            line2.X2 = time; line2.Y2 = l;
-            canvas.Children.Add(line1);
-            canvas.Children.Add(line2);
-            
         }
         private void SaveData()
         {
             Data data = new Data(id, myPort.PortName, myPort.BaudRate, tC, l, rV, gV, yV, bV, wV, sent, recv);
             dataList.Add(data);
             id++;
+        }
+
+        private string OnGetData(byte[] buffer, int count)
+        {
+            string result = "";
+            for(int i = 0; i < count; i++)
+            {
+                byte[] tmpByte = new byte[1];
+                tmpByte[0] = buffer[i+3];
+                result += BitConverter.ToString(tmpByte).Replace('-', '\0');
+            }
+            return result;
         }
     }
 }
