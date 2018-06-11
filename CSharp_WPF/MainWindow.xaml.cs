@@ -52,11 +52,9 @@ namespace CSharp_WPF
                 myPort.Open();
                 flag = true;
             }
-            PortWrite("1");
         }
         private void close_Click(object sender, RoutedEventArgs e)
         {
-            PortWrite("0");
             if (myPort != null && myPort.IsOpen)
             {
                 myPort.Close();
@@ -66,29 +64,34 @@ namespace CSharp_WPF
 
         private void send_Click(object sender, RoutedEventArgs e)
         {
-            PortWrite("r");
             rV = red.Value;
             gV = green.Value;
             yV = yellow.Value;
             bV = blue.Value;
             wV = white.Value;
-            int r = (int)rV;
-            int g = (int)gV;
-            int y = (int)yV;
-            int b = (int)bV;
-            int w = (int)wV;
-            string sr = r.ToString();
-            string sg = g.ToString();
-            string sy = y.ToString();
-            string sb = b.ToString();
-            string sw = w.ToString();
-            PortWrite(sr + " ");
-            PortWrite(sg + " ");
-            PortWrite(sy + " ");
-            PortWrite(sb + " ");
-            PortWrite(sw + " ");
+            int[] LED = new int[5];
+            LED[0] = (int)rV;
+            LED[1] = (int)gV;
+            LED[2] = (int)yV;
+            LED[3] = (int)bV;
+            LED[4] = (int)wV;
+            string[] sLED = new string[5];
+            for (int i = 0; i < 5; i++)
+            {
+                if (LED[i] == 10)
+                {
+                    sLED[i] = "00" + LED[i].ToString();
+                }
+                else
+                {
+                    sLED[i] = "000" + LED[i].ToString();
+                }
+            }
 
-            Color c = Color.FromScRgb(255, (float)1 / 5*r + (float)1 / 10*y, (float)1 / 5 * g + (float)1 / 10*y, (float)1 / 5 * b);
+
+            writeContent.Text = sLED[0] + sLED[1] + sLED[2] + sLED[3] + sLED[4];
+
+            Color c = Color.FromScRgb(255, (float)1 / 5 * LED[0] + (float)1 / 10 * LED[1], (float)1 / 5 * LED[2] + (float)1 / 10 * LED[3], (float)1 / 5 * LED[4]);
             color.Fill = new SolidColorBrush(c);
         }
 
@@ -161,7 +164,6 @@ namespace CSharp_WPF
             {
                 try
                 {
-                    PortWrite("m");
                     byte address = Convert.ToByte(addressNo.Text, 16);
                     byte regNumber = Convert.ToByte(registerNo.Text, 16);
                     byte regCount = Convert.ToByte(registerCount.Text, 16);
@@ -202,11 +204,17 @@ namespace CSharp_WPF
                     bText.Add(MyModbus.WORD_HI(crc));
                     bText.Add(MyModbus.WORD_LO(crc));
                     byte[] myText = bText.ToArray();
-
-                    PortWrite(count.ToString());
+                    
                     myPort.Write(myText, 0, myText.Length);
+                    myPort.Write(";");
                     sendMessage.Items.Add(BitConverter.ToString(myText));
-                    returnMessage.Items.Add(BitConverter.ToString(text));
+                    //returnMessage.Items.Add(BitConverter.ToString(text));
+                    byte[] getBytes = new byte[32];
+                    myPort.Read(getBytes, 0, 32);
+                    returnMessage.Items.Add(BitConverter.ToString(getBytes));
+                    byte[] recvBytes = new byte[32];
+                    myPort.Read(recvBytes, 0, 32);
+                    returnMessage.Items.Add(BitConverter.ToString(recvBytes));
                     sent = writeContent.Text;
                 }
                 catch(Exception exception)
@@ -221,11 +229,10 @@ namespace CSharp_WPF
             {
                 try
                 {
-                    myPort.Write("n");
                     byte address = Convert.ToByte(addressNo.Text, 16);
                     byte regNumber = Convert.ToByte(registerNo.Text, 16);
                     byte regCount = Convert.ToByte(registerCount.Text, 16);
-                    List<byte> bRead = new List<byte>();
+                    /*List<byte> bRead = new List<byte>();
                     List<string> sRead = new List<string>();
                     for (int j = 0; j < readContent.Text.Length; j += 2)
                     {
@@ -239,10 +246,14 @@ namespace CSharp_WPF
                     byte count = (byte)myRead.Length;
                     byte[] myCount = new byte[1];
                     myCount[0] = count;
-
+                    */
                     MyModbus modbus = new MyModbus();
                     byte[] text = modbus.GetReadFrame(address, (byte)0x03, regNumber, regCount, 8);
-                    List<byte> bText = new List<byte>();
+                    myPort.Write(text, 0, 8);
+                    myPort.Write(";");
+                    sendMessage.Items.Add(BitConverter.ToString(text));
+
+                    /*List<byte> bText = new List<byte>();
                     int i = 0;
                     for (int j = 0; j < 2; j++)
                     {
@@ -261,12 +272,15 @@ namespace CSharp_WPF
                     ushort crc = MyModbus.CRC16(tmpText, 0, tmpText.Length - 3);
                     bText.Add(MyModbus.WORD_HI(crc));
                     bText.Add(MyModbus.WORD_LO(crc));
-                    byte[] myText = bText.ToArray();
+                    byte[] myText = bText.ToArray();*/
 
-                    PortWrite(count.ToString());
-                    myPort.Write(text, 0, 8);
-                    sendMessage.Items.Add(BitConverter.ToString(text));
-                    returnMessage.Items.Add(BitConverter.ToString(myText));
+                    //returnMessage.Items.Add(BitConverter.ToString(myText));
+                    byte[] getBytes = new byte[32];
+                    myPort.Read(getBytes, 0, 32);
+                    returnMessage.Items.Add(BitConverter.ToString(getBytes));
+                    byte[] recvBytes = new byte[32];
+                    myPort.Read(recvBytes, 0, 32);
+                    returnMessage.Items.Add(BitConverter.ToString(recvBytes));
                     recv = readContent.Text;
                 }
                 catch(Exception exception)
@@ -296,7 +310,6 @@ namespace CSharp_WPF
         }
         private void Window_Closed(object sender, EventArgs e)
         {
-            PortWrite("e");
             Thread.CurrentThread.Abort();
         }
 
